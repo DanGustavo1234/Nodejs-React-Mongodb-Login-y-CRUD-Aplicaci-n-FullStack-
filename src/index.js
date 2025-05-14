@@ -1,12 +1,11 @@
 import app from './app.js';
+import connectDB from './db.js';
+import {PORT} from './config.js';
 
-
-const PORT = process.env.PORT || 3000;
+connectDB();
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);
 });
 
-app.get('/', (req, res) => {
-    res.send(`<h1>Welcome to the Express.js</h1>`);
-})
+
