@@ -4,19 +4,16 @@ import { JWT_SECRET } from "../config.js";
 
 
 export function createAccessToken(payload) {
+    
     return new Promise((resolve, reject) => {
         jwt.sign(payload,JWT_SECRET,{
             expiresIn:"1d"
         },
-        (err,token)=>{
-            if(err){
-                console.log("Error generating token",err);
-                return res.status(500).send("Error generating token");
+        (err, token) => {
+            if (err) {
+                return reject(err);
             }
-            res.cookie("token",token)
-            res.json({
-                message:"User created successfully",
-            })
+            return resolve(token);
         }
     )
     })
