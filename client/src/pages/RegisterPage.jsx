@@ -1,8 +1,9 @@
-import { useForm } from 'react-hook-form';
-import { registerRequest } from '../api/auth';
-import { useState } from 'react';
-import { Button } from "@/components/ui/button"
-import { Loader2Icon } from "lucide-react"
+import { useForm } from "react-hook-form";
+import { useState } from "react";
+import { Button } from "@/components/ui/button";
+import { Loader2Icon } from "lucide-react";
+import { useAuth } from "../context/AuthContext.jsx";
+import { useNavigate } from "react-router-dom";
 
 import {
   Card,
@@ -12,22 +13,29 @@ import {
   CardContent,
   CardFooter,
 } from "@/components/ui/card";
+import { useEffect } from "react";
 
 function RegisterPage() {
-  const { register, handleSubmit,reset } = useForm();
+  const {
+    register,
+    handleSubmit,
+    reset,
+    formState: { errors },
+  } = useForm();
   const [loading, setLoading] = useState(null);
+  const { singUp, isAuthenticated, errors: RegisterErrors } = useAuth();
+  const navigate = useNavigate();
 
+  useEffect(() => {
+    if (isAuthenticated) {
+      navigate("/tasks");
+    }
+  }, [isAuthenticated]);
 
   const onSubmit = async (data) => {
-    try {
-      setLoading(true);
-      const response = await registerRequest(data);
-      console.log("Registration successful:", response);
-      reset(); 
-    } catch (error) {
-      console.error("Error during registration:", error);
-      alert("Registration failed. Please try again.");
-    }
+    setLoading(true);
+    singUp(data);
+    reset();
     setLoading(false);
   };
 
@@ -38,6 +46,12 @@ function RegisterPage() {
           <CardTitle>Create an account</CardTitle>
           <CardDescription>Enter your details to register</CardDescription>
         </CardHeader>
+        {RegisterErrors.length > 0 &&
+          RegisterErrors.map((err, i) => (
+            <p key={i} className="text-red-500">
+              {err}
+            </p>
+          ))}
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
@@ -54,8 +68,12 @@ function RegisterPage() {
                 {...register("username", { required: true })}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                 placeholder="your_username"
-                required
               />
+              {errors.username && (
+                <span className="text-red-500 text-sm">
+                  Username is required
+                </span>
+              )}
             </div>
 
             <div>
@@ -71,8 +89,10 @@ function RegisterPage() {
                 {...register("email", { required: true })}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
                 placeholder="you@example.com"
-                required
               />
+              {errors.email && (
+                <span className="text-red-500 text-sm">Email is required</span>
+              )}
             </div>
 
             <div>
@@ -87,21 +107,28 @@ function RegisterPage() {
                 id="password"
                 {...register("password", { required: true })}
                 className="bg-gray-50 border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white"
-                required
               />
+              {errors.password && (
+                <span className="text-red-500 text-sm">
+                  Password is required
+                </span>
+              )}
             </div>
           </CardContent>
 
           <CardFooter>
-          <Button size="sm" disabled={loading} className="w-full mt-5" type="submit">
-            {
-              loading ? (
+            <Button
+              size="sm"
+              disabled={loading}
+              className="w-full mt-5"
+              type="submit"
+            >
+              {loading ? (
                 <Loader2Icon className="animate-spin mr-2" />
               ) : (
                 "Register"
-              )
-            }
-          </Button>
+              )}
+            </Button>
           </CardFooter>
         </form>
       </Card>
