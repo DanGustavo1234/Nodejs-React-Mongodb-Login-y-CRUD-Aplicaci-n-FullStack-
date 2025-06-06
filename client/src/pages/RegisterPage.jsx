@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2Icon } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,Link } from "react-router-dom";
 
 import {
   Card,
@@ -19,7 +19,6 @@ function RegisterPage() {
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm();
   const [loading, setLoading] = useState(null);
@@ -35,7 +34,6 @@ function RegisterPage() {
   const onSubmit = async (data) => {
     setLoading(true);
     singUp(data);
-    reset();
     setLoading(false);
   };
 
@@ -46,12 +44,15 @@ function RegisterPage() {
           <CardTitle>Create an account</CardTitle>
           <CardDescription>Enter your details to register</CardDescription>
         </CardHeader>
-        {RegisterErrors.length > 0 &&
-          RegisterErrors.map((err, i) => (
-            <p key={i} className="text-red-500">
-              {err}
-            </p>
-          ))}
+        {
+          RegisterErrors.errors && (
+            <div className="bg-red-100 text-red-700 p-4 rounded mb-4">
+              {RegisterErrors.errors.map((error, index) => (
+                <p key={index}>{error}</p>
+              ))}
+            </div>
+          ) 
+       }
 
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
@@ -131,6 +132,15 @@ function RegisterPage() {
             </Button>
           </CardFooter>
         </form>
+        <CardFooter className="text-center mt-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Already have an account?{" "}
+            <Link to="/login" className="text-blue-600 dark:text-blue-500 hover:underline">
+              Login
+            </Link>
+          </p>
+        </CardFooter>
+
       </Card>
     </div>
   );

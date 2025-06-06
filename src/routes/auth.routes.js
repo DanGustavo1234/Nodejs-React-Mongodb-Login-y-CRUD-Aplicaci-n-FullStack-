@@ -17,6 +17,10 @@ routerAuth.post('/register',validateSchema(registerSchema),register)
 
 routerAuth.post('/logout',logout)
 
+// routerAuth.get('/verify-token',authRequired,(req,res)=>{
+//     res.json({message:"Token is valid"})
+// })
+
 routerAuth.get('/profile',authRequired,profile)
 
 

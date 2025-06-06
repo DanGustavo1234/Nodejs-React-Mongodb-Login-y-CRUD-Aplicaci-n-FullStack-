@@ -1,104 +1,120 @@
 import User from "../models/user.model.js";
-import bcrypt from "bcryptjs"
+import bcrypt from "bcryptjs";
 import { createAccessToken } from "../libs/jwt.js";
 
+export const login = async (req, res) => {
+    const { email, password } = req.body;
+    try {
+        const user = await User.findOne({ email });
 
-
-export const login=async (req, res) => {
-    const {email,password}=req.body;
-    try{
-
-        const user=await User.findOne({email})
-
-        if(!user){
-            return res.status(400).send("User not found")
+        if (!user) {
+            // Unificamos el formato de error
+            return res.status(400).json({ errors: ['User not found'] });
         }
 
-        const isMatch= await bcrypt.compare(password,user.password)
+        const isMatch = await bcrypt.compare(password, user.password);
 
-        if(!isMatch){
-            return res.status(400).send("Invalid password")
+        if (!isMatch) {
+            // Unificamos el formato de error
+            return res.status(400).json({ errors: ['Invalid credentials'] }); // Más genérico por seguridad
         }
-        
-        const token= await createAccessToken({id:user._id})
-        res.cookie("token",token,{
-            maxAge: 5000,
-            httpOnly: true,
-            secure: true,
-        })
-        res.status(201).json({
-            message:"User logged in",
-            user:{
-                id:user._id,
-                username:user.username,
-                email:user.email,
+
+        const token = await createAccessToken({ id: user._id });
+
+        // Establecemos la cookie
+        res.cookie("token", token, {
+            httpOnly: false,
+            secure: true, 
+            sameSite: 'none', 
+            maxAge: 3600000 
+        });
+
+        // Respuesta exitosa
+        res.status(200).json({
+            message: "Authentication successful",
+            user: {
+                id: user._id,
+                username: user.username,
+                email: user.email,
             },
-            token:token
-        })
-    }catch(error){
-        return res.status(500).send("Error Logging in");
+            token: token // Se recomienda no enviar el token en la respuesta si ya lo envías en la cookie HTTP Only
+        });
+    } catch (error) {
+        console.error("Login error:", error); // Para depuración
+        return res.status(500).json({ errors: ['An unexpected error occurred during login'] });
     }
-}
+};
 
-export const register=async (req, res) => {
-    const {email,password,username}=req.body;
-    try{
-
-        const useFound=await User.findOne({email});
-        if(useFound){
-            return res.status(400).json(['Email already exists'])
+export const register = async (req, res) => {
+    const { email, password, username } = req.body;
+    try {
+        const userFound = await User.findOne({ email });
+        if (userFound) {
+            // Unificamos el formato de error
+            return res.status(400).json({ errors: ['Email already exists'] });
         }
-        const passwordhash= await bcrypt.hash(password,10)
-        const newuser= new User({
-            username:username,
-            email:email,
-            password:passwordhash,
-        })
-        const userSave= await newuser.save()
-        const token= await createAccessToken({id:userSave._id})
-        res.cookie("token",token,{
-            maxAge: 5000,
-            sameSite: 'None',
+
+        const passwordhash = await bcrypt.hash(password, 10);
+        const newUser = new User({
+            username: username,
+            email: email,
+            password: passwordhash,
+        });
+
+        const userSave = await newUser.save();
+        const token = await createAccessToken({ id: userSave._id });
+
+        // Establecemos la cookie
+        res.cookie("token", token, {
             httpOnly: true,
-            secure: false,
-        })
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'Lax',
+            maxAge: 3600000 // 1 hora de duración
+        });
+
+        // Respuesta exitosa
         res.status(201).json({
-            message:"User created",
-            user:{
-                id:userSave._id,
-                username:userSave.username,
-                email:userSave.email,
+            message: "User registered successfully",
+            user: {
+                id: userSave._id,
+                username: userSave.username,
+                email: userSave.email,
             },
-            token:token
-        })
-    }catch(error){
-        return res.status(500).send("Error creating user");
+            token: token // Se recomienda no enviar el token en la respuesta si ya lo envías en la cookie HTTP Only
+        });
+    } catch (error) {
+        console.error("Registration error:", error); // Para depuración
+        return res.status(500).json({ errors: ['An unexpected error occurred during registration'] });
     }
-}
+};
 
-
-export const logout=async (req, res) => {
-    res.clearCookie("token")
+export const logout = async (req, res) => {
+    // Limpiamos la cookie del token
+    res.clearCookie("token", {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'Lax',
+    });
     res.status(200).json({
-        message:"User logged out"
-    })
-}
+        message: "User logged out successfully"
+    });
+};
 
-
-export const profile=async (req, res) => {
-    const user= await User.findById(req.user.id)
-    if(!user){
-        return res.status(400).send("User not found")
+export const profile = async (req, res) => {
+    // req.user.id viene del middleware de autenticación
+    const user = await User.findById(req.user.id);
+    if (!user) {
+        // Unificamos el formato de error
+        return res.status(404).json({ errors: ['User profile not found'] }); // 404 si no se encuentra el perfil
     }
     res.status(200).json({
-        message:"User profile",
-        user:{
-            id:user._id,
-            username:user.username,
-            email:user.email,
-            createdAt:user.createdAt,
-            updatedAt:user.updatedAt
+        message: "User profile retrieved successfully",
+        user: {
+            id: user._id,
+            username: user.username,
+            email: user.email,
+            createdAt: user.createdAt,
+            updatedAt: user.updatedAt
         }
-    })
-}
-
+    });
+};

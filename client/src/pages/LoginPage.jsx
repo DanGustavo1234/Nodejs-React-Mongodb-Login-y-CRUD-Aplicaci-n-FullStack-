@@ -1,10 +1,9 @@
-
 import { useForm } from "react-hook-form";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Loader2Icon } from "lucide-react";
 import { useAuth } from "../context/AuthContext.jsx";
-import { useNavigate } from "react-router-dom";
+import { useNavigate,Link } from "react-router-dom";
 
 import {
   Card,
@@ -16,16 +15,14 @@ import {
 } from "@/components/ui/card";
 import { useEffect } from "react";
 
-
 function LoginPage() {
   const {
     register,
     handleSubmit,
-    reset,
     formState: { errors },
   } = useForm();
   const [loading, setLoading] = useState(null);
-  const { singUp, isAuthenticated, errors: RegisterErrors } = useAuth();
+  const {isAuthenticated, errors: singInErrors ,singIn} = useAuth();
   const navigate = useNavigate();
 
   useEffect(() => {
@@ -36,8 +33,8 @@ function LoginPage() {
 
   const onSubmit = async (data) => {
     setLoading(true);
-    singUp(data);
-    reset();
+    singIn(data);
+    // reset();
     setLoading(false);
   };
   return (
@@ -47,13 +44,15 @@ function LoginPage() {
           <CardTitle>SingIn</CardTitle>
           <CardDescription>Enter your details to login</CardDescription>
         </CardHeader>
-        {RegisterErrors.length > 0 &&
-          RegisterErrors.map((err, i) => (
-            <p key={i} className="text-red-500">
-              {err}
-            </p>
-          ))}
-
+       {
+          singInErrors.errors && (
+            <div className="bg-red-100 text-red-700 p-4 rounded mb-4">
+              {singInErrors.errors.map((error, index) => (
+                <p key={index}>{error}</p>
+              ))}
+            </div>
+          ) 
+       }
         <form onSubmit={handleSubmit(onSubmit)}>
           <CardContent className="space-y-4">
             <div>
@@ -111,6 +110,14 @@ function LoginPage() {
             </Button>
           </CardFooter>
         </form>
+        <CardFooter className="text-center mt-4">
+          <p className="text-sm text-gray-500 dark:text-gray-400">
+            Don't have an account?{" "}
+            <Link to="/register" className="text-blue-600 dark:text-blue-500 hover:underline">
+              Register
+            </Link>
+          </p>
+        </CardFooter>
       </Card>
     </div>
   );
